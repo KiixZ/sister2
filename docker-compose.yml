@@ -52,7 +52,10 @@ services:
     build:
       context: ./client
     restart: always
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chatai.rule=Host(`porto-chatai-sister.rryxja.easypanel.host`)"
+      - "traefik.http.services.chatai.loadbalancer.server.port=80"
     networks:
       - chat-network
 
