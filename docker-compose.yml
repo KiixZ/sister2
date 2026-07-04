@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chat_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+    networks:
+      - chat-network
+
+  ai-service:
+    build:
+      context: ./ai-service
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_HOST=porto_sister-db
+      - DB_USER=sister
+      - DB_PASSWORD=Jancok1337!
+      - DB_NAME=sisterdb
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - chat-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=porto_sister-db
+      - DB_USER=sister
+      - DB_PASSWORD=Jancok1337!
+      - DB_NAME=sisterdb
+      - AI_SERVICE_URL=http://ai-service:3001
+      - GATEWAY_API_KEY=Ab8RN6JMBztWn_bxD6sZjww_S9a7rpevSwZJEysRwHQSo9kPrQ
+    depends_on:
+      - db
+      - ai-service
+    networks:
+      - chat-network
+
+  client:
+    build:
+      context: ./client
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - chat-network
+
+volumes:
+  db_data:
+
+networks:
+  chat-network:
+    driver: bridge
