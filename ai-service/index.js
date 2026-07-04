@@ -65,7 +65,7 @@ app.get('/api/ai/history/:userId', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const PORT = process.env.AI_SERVICE_PORT || 7001;
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`AI Service running on port ${PORT}`);
 });
