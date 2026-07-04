@@ -3,7 +3,7 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -39,7 +39,7 @@ app.post('/api/ai/chat', async (req, res) => {
         }
         
         if (!session_id) {
-            session_id = uuidv4();
+            session_id = crypto.randomUUID();
         }
 
         // Fetch username from DB so AI knows who it is talking to
