@@ -186,7 +186,7 @@ app.post('/api/login', async (req, res) => {
  */
 app.post('/api/chat', async (req, res) => {
     try {
-        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:7001';
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://127.0.0.1:7001';
         const response = await axios.post(`${aiServiceUrl}/api/ai/chat`, req.body);
         res.json(response.data);
     } catch (error) {
@@ -213,7 +213,7 @@ app.post('/api/chat', async (req, res) => {
  */
 app.get('/api/history/:userId', async (req, res) => {
     try {
-        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:7001';
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://127.0.0.1:7001';
         const response = await axios.get(`${aiServiceUrl}/api/ai/history/${req.params.userId}`);
         res.json(response.data);
     } catch (error) {
