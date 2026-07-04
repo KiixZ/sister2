@@ -58,6 +58,7 @@ services:
       - "traefik.http.services.chatai.loadbalancer.server.port=80"
     networks:
       - chat-network
+      - easypanel
 
 volumes:
   db_data:
@@ -65,3 +66,5 @@ volumes:
 networks:
   chat-network:
     driver: bridge
+  easypanel:
+    external: true
