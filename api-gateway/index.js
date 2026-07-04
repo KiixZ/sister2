@@ -14,6 +14,10 @@ app.use(cors());
 // Logging
 app.use(morgan('combined'));
 
+// Serve static frontend files
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../client')));
+
 // Database connection for login
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'db',
