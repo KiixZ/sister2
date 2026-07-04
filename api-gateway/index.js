@@ -110,8 +110,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 const API_KEY = process.env.GATEWAY_API_KEY || 'my-secret-api-key';
 
 const authenticate = (req, res, next) => {
-    // login path is exempt from API key for simplicity, or we can require it
-    if (req.path === '/api/login') return next();
+    // login and register paths are exempt from API key for simplicity
+    if (req.path === '/api/login' || req.path === '/api/register') return next();
 
     const apiKey = req.header('X-API-KEY');
     if (apiKey === API_KEY) {
@@ -157,6 +157,45 @@ app.post('/api/login', async (req, res) => {
         }
     } catch (error) {
         console.error("Login Error:", error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/register:
+ *   post:
+ *     summary: User Registration
+ *     description: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful registration
+ *       400:
+ *         description: Username already exists
+ */
+app.post('/api/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const [existing] = await pool.execute('SELECT id FROM users WHERE username = ?', [username]);
+        if (existing.length > 0) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        const [result] = await pool.execute('INSERT INTO users (username, password) VALUES (?, ?)', [username, password]);
+        res.json({ message: 'Registration successful', user_id: result.insertId, api_key: API_KEY });
+    } catch (error) {
+        console.error("Registration Error:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

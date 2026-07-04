@@ -58,6 +58,59 @@ async function login() {
     }
 }
 
+function toggleRegister(show) {
+    if (show) {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('register-container').style.display = 'block';
+    } else {
+        document.getElementById('register-container').style.display = 'none';
+        document.getElementById('login-container').style.display = 'block';
+    }
+}
+
+async function register() {
+    const usernameInput = document.getElementById('reg-username').value;
+    const passwordInput = document.getElementById('reg-password').value;
+    const errorMsg = document.getElementById('register-error');
+
+    if (!usernameInput || !passwordInput) {
+        errorMsg.textContent = 'Please enter both username and password.';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            currentUser = data.user_id;
+            currentApiKey = data.api_key;
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('currentApiKey', currentApiKey);
+            
+            document.getElementById('register-container').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+            
+            fetchHistory();
+        } else {
+            errorMsg.textContent = data.error || 'Registration failed.';
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        errorMsg.textContent = 'Failed to connect to the server.';
+        errorMsg.style.display = 'block';
+    }
+}
+
 function logout() {
     currentUser = null;
     currentApiKey = null;
@@ -78,8 +131,12 @@ function appendMessage(sender, text) {
     msgDiv.classList.add('message');
     msgDiv.classList.add(sender === 'user' ? 'user' : 'ai');
     
-    // Simple way to handle newlines
-    msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+    // Parse Markdown for AI responses
+    if (sender === 'ai' && typeof marked !== 'undefined') {
+        msgDiv.innerHTML = marked.parse(text);
+    } else {
+        msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+    }
     
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;

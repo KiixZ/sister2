@@ -19,7 +19,23 @@
         <input type="password" id="password" placeholder="Enter password (admin123)">
     </div>
     <button onclick="login()">Login</button>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="toggleRegister(true)">Belum punya akun? Register di sini</a></p>
     <p id="login-error" style="color: red; display: none;"></p>
+</div>
+
+<div id="register-container" class="container" style="display: none;">
+    <h2>Register New User</h2>
+    <div class="form-group">
+        <label for="reg-username">Username:</label>
+        <input type="text" id="reg-username" placeholder="Choose a username">
+    </div>
+    <div class="form-group">
+        <label for="reg-password">Password:</label>
+        <input type="password" id="reg-password" placeholder="Choose a password">
+    </div>
+    <button onclick="register()" style="background-color: #28a745;">Register</button>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="toggleRegister(false)">Sudah punya akun? Login di sini</a></p>
+    <p id="register-error" style="color: red; display: none;"></p>
 </div>
 
 <div id="chat-container" class="container" style="display: none;">
@@ -44,6 +60,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
