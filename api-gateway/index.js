@@ -106,6 +106,12 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Expose raw Swagger JSON for importing
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerDocs);
+});
+
 // Simple Authentication Middleware (API Key)
 const API_KEY = process.env.GATEWAY_API_KEY || 'my-secret-api-key';
 
