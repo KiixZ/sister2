@@ -8,10 +8,17 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Create MySQL connection pool
+// Initialize Gemini (Will be checked at runtime to prevent startup crash)
+let genAI = null;
+try {
+    if (process.env.GEMINI_API_KEY) {
+        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    } else {
+        console.warn("WARNING: GEMINI_API_KEY is missing! AI Service will not be able to reply.");
+    }
+} catch (e) {
+    console.error("Failed to initialize Gemini:", e.message);
+}
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'db',
     user: process.env.DB_USER || 'root',
@@ -31,9 +38,14 @@ app.post('/api/ai/chat', async (req, res) => {
         }
 
         // Call Gemini API
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent(message);
-        const responseText = result.response.text();
+        let responseText = "";
+        if (genAI) {
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(message);
+            responseText = result.response.text();
+        } else {
+            responseText = "[Error: GEMINI_API_KEY is not set in Environment Variables. AI cannot respond.]";
+        }
         
         // Save to Database
         const [rows] = await pool.execute(
