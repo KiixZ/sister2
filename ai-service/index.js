@@ -129,12 +129,17 @@ app.get('/api/ai/history/:userId', async (req, res) => {
         const userId = req.params.userId;
         // Group by session_id, get the first message of each session to display in sidebar
         const [rows] = await pool.execute(
-            `SELECT session_id, MIN(request_time) as request_time, ANY_VALUE(request_text) as request_text 
-             FROM chat_history 
-             WHERE user_id = ? AND session_id IS NOT NULL 
-             GROUP BY session_id 
-             ORDER BY MIN(request_time) DESC`,
-            [userId]
+            `SELECT ch.session_id, ch.request_time, ch.request_text 
+             FROM chat_history ch
+             JOIN (
+                 SELECT session_id, MIN(request_time) as min_time
+                 FROM chat_history
+                 WHERE user_id = ? AND session_id IS NOT NULL
+                 GROUP BY session_id
+             ) first_msg ON ch.session_id = first_msg.session_id AND ch.request_time = first_msg.min_time
+             WHERE ch.user_id = ?
+             ORDER BY ch.request_time DESC`,
+            [userId, userId]
         );
         res.json(rows);
     } catch (error) {
