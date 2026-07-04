@@ -224,6 +224,17 @@ app.get('/api/history/:userId', async (req, res) => {
     }
 });
 
+app.get('/api/history/:userId/session/:sessionId', async (req, res) => {
+    try {
+        let aiServiceUrl = process.env.AI_SERVICE_URL || 'http://127.0.0.1:7001';
+        aiServiceUrl = aiServiceUrl.replace('localhost', '127.0.0.1');
+        const response = await axios.get(`${aiServiceUrl}/api/ai/history/${req.params.userId}/session/${req.params.sessionId}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching session history:", error.message);
+        res.status(500).json({ error: 'Failed to fetch session history' });
+    }
+});
 
 const PORT = process.env.API_GATEWAY_PORT || 7000;
 app.listen(PORT, '0.0.0.0', () => {
