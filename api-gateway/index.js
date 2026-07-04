@@ -16,7 +16,20 @@ app.use(morgan('combined'));
 
 // Serve static frontend files
 const path = require('path');
-app.use(express.static(path.join(__dirname, '../client')));
+const clientPath = path.join(__dirname, '../client');
+console.log('Serving static files from:', clientPath);
+app.use(express.static(clientPath));
+
+app.get('/', (req, res) => {
+    const fs = require('fs');
+    let files = [];
+    try {
+        files = fs.readdirSync(clientPath);
+    } catch (e) {
+        files = [e.message];
+    }
+    res.send(`<h1>API Gateway is running!</h1><p>Static files failed. Checked path: ${clientPath}</p><p>Files in path: ${files.join(', ')}</p>`);
+});
 
 // Database connection for login
 const pool = mysql.createPool({
@@ -40,7 +53,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: 'http://localhost:7000',
             },
         ],
         components: {
@@ -68,7 +81,7 @@ const API_KEY = process.env.GATEWAY_API_KEY || 'my-secret-api-key';
 const authenticate = (req, res, next) => {
     // login path is exempt from API key for simplicity, or we can require it
     if (req.path === '/api/login') return next();
-    
+
     const apiKey = req.header('X-API-KEY');
     if (apiKey === API_KEY) {
         next();
@@ -142,7 +155,7 @@ app.post('/api/login', async (req, res) => {
  */
 app.post('/api/chat', async (req, res) => {
     try {
-        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:3001';
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:7001';
         const response = await axios.post(`${aiServiceUrl}/api/ai/chat`, req.body);
         res.json(response.data);
     } catch (error) {
@@ -169,7 +182,7 @@ app.post('/api/chat', async (req, res) => {
  */
 app.get('/api/history/:userId', async (req, res) => {
     try {
-        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:3001';
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:7001';
         const response = await axios.get(`${aiServiceUrl}/api/ai/history/${req.params.userId}`);
         res.json(response.data);
     } catch (error) {
@@ -179,7 +192,7 @@ app.get('/api/history/:userId', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = process.env.API_GATEWAY_PORT || 7000;
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`API Gateway running on port ${PORT}`);
 });
