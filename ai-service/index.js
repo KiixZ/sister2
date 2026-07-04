@@ -37,7 +37,7 @@ app.post('/api/ai/chat', async (req, res) => {
         if (!user_id || !message) {
             return res.status(400).json({ error: 'user_id and message are required' });
         }
-        
+
         if (!session_id) {
             session_id = crypto.randomUUID();
         }
@@ -56,11 +56,11 @@ app.post('/api/ai/chat', async (req, res) => {
         // Call Gemini API
         let responseText = "";
         if (genAI) {
-            const model = genAI.getGenerativeModel({ 
-                model: "gemini-2.5-flash-lite",
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
                 systemInstruction: `Anda adalah asisten AI pintar yang dibuat oleh Rifki Saputra. Saat ini Anda sedang mengobrol dengan pengguna bernama ${username}. Jawablah dengan menggunakan bahasa Indonesia yang baik, asyik, dan natural.`
             });
-            
+
             // Get previous conversation history for this session
             let historyContext = [];
             try {
@@ -80,8 +80,16 @@ app.post('/api/ai/chat', async (req, res) => {
                 history: historyContext
             });
 
-            const result = await chat.sendMessage(message);
-            responseText = result.response.text();
+            try {
+                const result = await chat.sendMessage(message);
+                responseText = result.response.text();
+            } catch (apiError) {
+                console.error("Gemini API Error:", apiError);
+                if (apiError.status === 503) {
+                    return res.status(503).json({ error: 'Server AI Google sedang penuh/sibuk (503). Silakan coba lagi beberapa saat lagi.' });
+                }
+                throw apiError; // throw to outer catch
+            }
         } else {
             responseText = "[Error: GEMINI_API_KEY is not set in Environment Variables. AI cannot respond.]";
         }
@@ -99,7 +107,7 @@ app.post('/api/ai/chat', async (req, res) => {
         });
     } catch (error) {
         console.error("AI Service Error:", error);
-        res.status(500).json({ error: 'Internal Server Error in AI Service' });
+        res.status(500).json({ error: error.message || 'Internal Server Error in AI Service' });
     }
 });
 
