@@ -32,7 +32,7 @@ const pool = mysql.createPool({
 app.post('/api/ai/chat', async (req, res) => {
     try {
         const { user_id, message } = req.body;
-        
+
         if (!user_id || !message) {
             return res.status(400).json({ error: 'user_id and message are required' });
         }
@@ -40,13 +40,13 @@ app.post('/api/ai/chat', async (req, res) => {
         // Call Gemini API
         let responseText = "";
         if (genAI) {
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
             const result = await model.generateContent(message);
             responseText = result.response.text();
         } else {
             responseText = "[Error: GEMINI_API_KEY is not set in Environment Variables. AI cannot respond.]";
         }
-        
+
         // Save to Database
         const [rows] = await pool.execute(
             'INSERT INTO chat_history (user_id, request_text, response_text) VALUES (?, ?, ?)',
