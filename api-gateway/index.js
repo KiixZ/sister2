@@ -42,6 +42,37 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Auto-initialize tables
+async function initDB() {
+    try {
+        console.log("Checking/creating database tables...");
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS chat_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                request_text TEXT NOT NULL,
+                response_text TEXT NOT NULL,
+                request_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                tokens_used INT DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+        await pool.query(`INSERT IGNORE INTO users (username, password) VALUES ('admin', 'admin123')`);
+        console.log("Database tables verified successfully.");
+    } catch (err) {
+        console.error("Failed to initialize database tables:", err);
+    }
+}
+initDB();
+
 // Swagger Setup
 const swaggerOptions = {
     definition: {
