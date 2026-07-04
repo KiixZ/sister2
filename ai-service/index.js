@@ -30,6 +30,19 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Auto-migrate Database
+(async () => {
+    try {
+        await pool.execute('ALTER TABLE chat_history ADD COLUMN session_id VARCHAR(36)');
+        console.log("Migration: Added session_id column to chat_history.");
+    } catch (e) {
+        // It will throw ER_DUP_FIELDNAME if column already exists, which is fine
+        if (e.code !== 'ER_DUP_FIELDNAME') {
+            console.error("Migration Error:", e.message);
+        }
+    }
+})();
+
 app.post('/api/ai/chat', async (req, res) => {
     try {
         let { user_id, message, session_id } = req.body;
