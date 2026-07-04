@@ -20,9 +20,9 @@ services:
       context: ./ai-service
     restart: always
     ports:
-      - "3001:3001"
+      - "7001:7001"
     environment:
-      - PORT=3001
+      - PORT=7001
       - DB_HOST=porto_sister-db
       - DB_USER=sister
       - DB_PASSWORD=Jancok1337!
@@ -38,14 +38,14 @@ services:
       context: ./api-gateway
     restart: always
     ports:
-      - "3000:3000"
+      - "7000:7000"
     environment:
-      - PORT=3000
+      - PORT=7000
       - DB_HOST=porto_sister-db
       - DB_USER=sister
       - DB_PASSWORD=Jancok1337!
       - DB_NAME=sisterdb
-      - AI_SERVICE_URL=http://ai-service:3001
+      - AI_SERVICE_URL=http://ai-service:7001
       - GATEWAY_API_KEY=Ab8RN6JMBztWn_bxD6sZjww_S9a7rpevSwZJEysRwHQSo9kPrQ
     depends_on:
       - db
