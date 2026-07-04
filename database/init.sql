@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS chat_history (
     user_id INT NOT NULL,
     request_text TEXT NOT NULL,
     response_text TEXT NOT NULL,
+    session_id VARCHAR(36),
     request_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     tokens_used INT DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

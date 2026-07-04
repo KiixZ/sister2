@@ -1,6 +1,19 @@
 const API_BASE_URL = '/api';
 let currentUser = null;
 let currentApiKey = null;
+let currentSessionId = null;
+
+window.onload = () => {
+    const storedUser = localStorage.getItem('currentUser');
+    const storedKey = localStorage.getItem('currentApiKey');
+    if (storedUser && storedKey) {
+        currentUser = storedUser;
+        currentApiKey = storedKey;
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+        fetchHistory();
+    }
+};
 
 async function login() {
     const usernameInput = document.getElementById('username').value;
@@ -27,6 +40,8 @@ async function login() {
         if (response.ok) {
             currentUser = data.user_id;
             currentApiKey = data.api_key;
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('currentApiKey', currentApiKey);
             
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('chat-container').style.display = 'flex';
@@ -46,6 +61,9 @@ async function login() {
 function logout() {
     currentUser = null;
     currentApiKey = null;
+    currentSessionId = null;
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentApiKey');
     document.getElementById('login-container').style.display = 'block';
     document.getElementById('chat-container').style.display = 'none';
     document.getElementById('chat-box').innerHTML = '';
@@ -92,7 +110,7 @@ async function sendMessage() {
                 'Content-Type': 'application/json',
                 'X-API-KEY': currentApiKey
             },
-            body: JSON.stringify({ user_id: currentUser, message: message })
+            body: JSON.stringify({ user_id: currentUser, message: message, session_id: currentSessionId })
         });
 
         const data = await response.json();
@@ -101,6 +119,7 @@ async function sendMessage() {
         document.getElementById('loading-msg')?.remove();
 
         if (response.ok) {
+            currentSessionId = data.session_id;
             appendMessage('ai', data.reply);
             fetchHistory(); // Refresh history
         } else {
@@ -117,6 +136,14 @@ function handleKeyPress(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
+}
+
+function newChat() {
+    currentSessionId = null;
+    document.getElementById('chat-box').innerHTML = '';
+    const inputField = document.getElementById('message-input');
+    inputField.value = '';
+    inputField.focus();
 }
 
 async function fetchHistory() {
@@ -137,25 +164,48 @@ async function fetchHistory() {
             data.forEach(item => {
                 const historyItem = document.createElement('div');
                 historyItem.classList.add('history-item');
+                if (item.session_id === currentSessionId) {
+                    historyItem.style.backgroundColor = '#e0f7fa';
+                }
                 
                 const time = new Date(item.request_time).toLocaleString();
                 
                 historyItem.innerHTML = `
-                    <strong>Q: ${item.request_text}</strong>
+                    <strong>${item.request_text}</strong>
                     <div style="color: #666; font-size: 11px;">${time}</div>
                 `;
-                historyItem.onclick = () => {
-                    // Show this interaction in the chat box
-                    const chatBox = document.getElementById('chat-box');
-                    chatBox.innerHTML = '';
-                    appendMessage('user', item.request_text);
-                    appendMessage('ai', item.response_text);
-                };
+                historyItem.onclick = () => loadSession(item.session_id);
                 
                 historyList.appendChild(historyItem);
             });
         }
     } catch (error) {
         console.error('Failed to fetch history:', error);
+    }
+}
+
+async function loadSession(sessionId) {
+    if (!currentUser || !currentApiKey) return;
+    currentSessionId = sessionId;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/history/${currentUser}/session/${sessionId}`, {
+            headers: {
+                'X-API-KEY': currentApiKey
+            }
+        });
+        if (response.ok) {
+            const messages = await response.json();
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+            
+            messages.forEach(msg => {
+                appendMessage('user', msg.request_text);
+                appendMessage('ai', msg.response_text);
+            });
+            fetchHistory(); // Highlight current session
+        }
+    } catch (error) {
+        console.error('Failed to load session:', error);
     }
 }
